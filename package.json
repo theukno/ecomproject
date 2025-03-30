@@ -59,7 +59,7 @@
     "vaul": "^0.9.6",
     "zod": "latest",
     "prisma": "latest",
-    "bcryptjs": "latest",
+    "bcryptjs": "^2.4.3",
     "jsonwebtoken": "latest",
     "@prisma/client": "latest",
     "@paypal/react-paypal-js": "latest"
