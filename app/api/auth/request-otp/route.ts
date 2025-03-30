@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import nodemailer from "nodemailer"
 
 const requestOTPSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -32,21 +33,27 @@ export async function POST(req: Request) {
     const expiresAt = new Date()
     expiresAt.setMinutes(expiresAt.getMinutes() + 10) // OTP expires in 10 minutes
 
-    await prisma.oTP.upsert({
+    await prisma.otp.upsert({
       where: { email },
-      update: {
-        code: otp,
-        expiresAt,
-      },
-      create: {
-        email,
-        code: otp,
-        expiresAt,
+      update: { code: otp, expiresAt },
+      create: { email, code: otp, expiresAt },
+    })
+
+    // Send OTP via email
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // Or another email provider
+      auth: {
+        user: process.env.EMAIL_USER, // Your email
+        pass: process.env.EMAIL_PASS, // Your email password or app password
       },
     })
 
-    // In a real app, you would send the OTP via email
-    console.log(`OTP for ${email}: ${otp}`)
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Your OTP Code",
+      text: `Your OTP is: ${otp}. It expires in 10 minutes.`,
+    })
 
     return NextResponse.json({ message: "OTP sent successfully" }, { status: 200 })
   } catch (error) {
@@ -54,4 +61,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Something went wrong" }, { status: 500 })
   }
 }
-
