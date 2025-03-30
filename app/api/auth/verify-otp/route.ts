@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const { email, otp } = result.data
 
     // Find OTP record
-    const otpRecord = await prisma.oTP.findUnique({
+    const otpRecord = await prisma.OTP.findUnique({
       where: { email },
     })
 
@@ -30,6 +30,7 @@ export async function POST(req: Request) {
 
     // Check if OTP is expired
     if (otpRecord.expiresAt < new Date()) {
+      await prisma.OTP.delete({ where: { email } }) // Clean up expired OTP
       return NextResponse.json({ message: "OTP has expired" }, { status: 400 })
     }
 
@@ -44,10 +45,8 @@ export async function POST(req: Request) {
       data: { emailVerified: new Date() },
     })
 
-    // Delete OTP record
-    await prisma.oTP.delete({
-      where: { email },
-    })
+    // Delete OTP record after successful verification
+    await prisma.OTP.delete({ where: { email } })
 
     return NextResponse.json({ message: "Email verified successfully" }, { status: 200 })
   } catch (error) {
@@ -55,4 +54,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Something went wrong" }, { status: 500 })
   }
 }
-
